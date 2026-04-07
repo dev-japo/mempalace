@@ -248,20 +248,39 @@ def cmd_compress(args):
         print("  Run: mempalace init <dir> then mempalace mine <dir>")
         sys.exit(1)
 
-    # Query drawers in the wing
+    # Query drawers in the wing (batched to avoid SQL variable limit)
+    # Avoid col.count() as it can hang on large collections
     where = {"wing": args.wing} if args.wing else None
+    
+    docs = []
+    metas = []
+    ids = []
+    
+    offset = 0
+    batch_size = 1000
+    
     try:
-        kwargs = {"include": ["documents", "metadatas"]}
-        if where:
-            kwargs["where"] = where
-        results = col.get(**kwargs)
+        while True:
+            kwargs = {"limit": batch_size, "offset": offset, "include": ["documents", "metadatas"]}
+            if where:
+                kwargs["where"] = where
+            batch = col.get(**kwargs)
+            
+            batch_ids = batch.get("ids", [])
+            if not batch_ids:
+                break
+                
+            docs.extend(batch["documents"])
+            metas.extend(batch["metadatas"])
+            ids.extend(batch_ids)
+            offset += len(batch_ids)
+            
+            # Progress feedback
+            if offset % 5000 == 0:
+                print(f"  Loading drawers... {offset} so far")
     except Exception as e:
         print(f"\n  Error reading drawers: {e}")
         sys.exit(1)
-
-    docs = results["documents"]
-    metas = results["metadatas"]
-    ids = results["ids"]
 
     if not docs:
         wing_label = f" in wing '{args.wing}'" if args.wing else ""
@@ -279,7 +298,7 @@ def cmd_compress(args):
     total_compressed = 0
     compressed_entries = []
 
-    for doc, meta, doc_id in zip(docs, metas, ids):
+    for idx, (doc, meta, doc_id) in enumerate(zip(docs, metas, ids), 1):
         compressed = dialect.compress(doc, metadata=meta)
         stats = dialect.compression_stats(doc, compressed)
 
@@ -298,22 +317,39 @@ def cmd_compress(args):
             )
             print(f"    {compressed}")
             print()
+        elif idx % 1000 == 0:
+            print(f"  Processed {idx}/{len(docs)} drawers...")
 
     # Store compressed versions (unless dry-run)
     if not args.dry_run:
         try:
             comp_col = client.get_or_create_collection("mempalace_compressed")
-            for doc_id, compressed, meta, stats in compressed_entries:
-                comp_meta = dict(meta)
-                comp_meta["compression_ratio"] = round(stats["ratio"], 1)
-                comp_meta["original_tokens"] = stats["original_tokens"]
+            
+            # Batch upsert to avoid performance issues
+            batch_size = 1000
+            for i in range(0, len(compressed_entries), batch_size):
+                batch = compressed_entries[i:i + batch_size]
+                batch_ids = []
+                batch_docs = []
+                batch_metas = []
+                
+                for doc_id, compressed, meta, stats in batch:
+                    comp_meta = dict(meta)
+                    comp_meta["compression_ratio"] = round(stats["ratio"], 1)
+                    comp_meta["original_tokens"] = stats["original_tokens"]
+                    batch_ids.append(doc_id)
+                    batch_docs.append(compressed)
+                    batch_metas.append(comp_meta)
+                
                 comp_col.upsert(
-                    ids=[doc_id],
-                    documents=[compressed],
-                    metadatas=[comp_meta],
+                    ids=batch_ids,
+                    documents=batch_docs,
+                    metadatas=batch_metas,
                 )
+                print(f"  Stored {min(i + batch_size, len(compressed_entries))}/{len(compressed_entries)} compressed drawers...")
+            
             print(
-                f"  Stored {len(compressed_entries)} compressed drawers in 'mempalace_compressed' collection."
+                f"\n  ✓ Stored {len(compressed_entries)} compressed drawers in 'mempalace_compressed' collection."
             )
         except Exception as e:
             print(f"  Error storing compressed drawers: {e}")
