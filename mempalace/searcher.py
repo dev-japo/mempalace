@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 import chromadb
+from chromadb.config import Settings
 
 
 def search(query: str, palace_path: str, wing: str = None, room: str = None, n_results: int = 5):
@@ -18,7 +19,10 @@ def search(query: str, palace_path: str, wing: str = None, room: str = None, n_r
     Optionally filter by wing (project) or room (aspect).
     """
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(
+            path=palace_path,
+            settings=Settings(anonymized_telemetry=False)
+        )
         col = client.get_collection("mempalace_drawers")
     except Exception:
         print(f"\n  No palace found at {palace_path}")
@@ -92,7 +96,10 @@ def search_memories(
     Used by the MCP server and other callers that need data.
     """
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(
+            path=palace_path,
+            settings=Settings(anonymized_telemetry=False)
+        )
         col = client.get_collection("mempalace_drawers")
     except Exception as e:
         return {"error": f"No palace found at {palace_path}: {e}"}

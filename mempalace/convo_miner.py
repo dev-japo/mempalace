@@ -16,6 +16,7 @@ from datetime import datetime
 from collections import defaultdict
 
 import chromadb
+from chromadb.config import Settings
 
 from .normalize import normalize
 
@@ -213,7 +214,10 @@ def detect_convo_room(content: str) -> str:
 
 def get_collection(palace_path: str):
     os.makedirs(palace_path, exist_ok=True)
-    client = chromadb.PersistentClient(path=palace_path)
+    client = chromadb.PersistentClient(
+        path=palace_path,
+        settings=Settings(anonymized_telemetry=False)
+    )
     try:
         return client.get_collection("mempalace_drawers")
     except Exception:

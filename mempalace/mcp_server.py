@@ -27,6 +27,7 @@ from .config import MempalaceConfig
 from .searcher import search_memories
 from .palace_graph import traverse, find_tunnels, graph_stats
 import chromadb
+from chromadb.config import Settings
 
 from .knowledge_graph import KnowledgeGraph
 
@@ -41,7 +42,10 @@ _config = MempalaceConfig()
 def _get_collection(create=False):
     """Return the ChromaDB collection, or None on failure."""
     try:
-        client = chromadb.PersistentClient(path=_config.palace_path)
+        client = chromadb.PersistentClient(
+            path=_config.palace_path,
+            settings=Settings(anonymized_telemetry=False)
+        )
         if create:
             return client.get_or_create_collection(_config.collection_name)
         return client.get_collection(_config.collection_name)

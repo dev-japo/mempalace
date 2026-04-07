@@ -150,6 +150,7 @@ def cmd_status(args):
 def cmd_repair(args):
     """Rebuild palace vector index from SQLite metadata."""
     import chromadb
+    from chromadb.config import Settings
     import shutil
 
     palace_path = os.path.expanduser(args.palace) if args.palace else MempalaceConfig().palace_path
@@ -165,7 +166,10 @@ def cmd_repair(args):
 
     # Try to read existing drawers
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(
+            path=palace_path,
+            settings=Settings(anonymized_telemetry=False)
+        )
         col = client.get_collection("mempalace_drawers")
         total = col.count()
         print(f"  Drawers found: {total}")
@@ -221,6 +225,8 @@ def cmd_repair(args):
 def cmd_compress(args):
     """Compress drawers in a wing using AAAK Dialect."""
     import chromadb
+    from chromadb.config import Settings
+    from tqdm import tqdm
     from .dialect import Dialect
 
     palace_path = os.path.expanduser(args.palace) if args.palace else MempalaceConfig().palace_path
@@ -241,7 +247,10 @@ def cmd_compress(args):
 
     # Connect to palace
     try:
-        client = chromadb.PersistentClient(path=palace_path)
+        client = chromadb.PersistentClient(
+            path=palace_path,
+            settings=Settings(anonymized_telemetry=False)
+        )
         col = client.get_collection("mempalace_drawers")
     except Exception:
         print(f"\n  No palace found at {palace_path}")
