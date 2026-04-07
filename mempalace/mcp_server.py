@@ -64,18 +64,26 @@ def tool_status():
     col = _get_collection()
     if not col:
         return _no_palace()
-    count = col.count()
     wings = {}
     rooms = {}
     try:
-        all_meta = col.get(include=["metadatas"])["metadatas"]
-        for m in all_meta:
-            w = m.get("wing", "unknown")
-            r = m.get("room", "unknown")
-            wings[w] = wings.get(w, 0) + 1
-            rooms[r] = rooms.get(r, 0) + 1
+        # Batch to avoid SQL variable limit - avoid col.count() which hangs
+        offset = 0
+        batch_size = 1000
+        while True:
+            batch = col.get(limit=batch_size, offset=offset, include=["metadatas"])
+            batch_metas = batch.get("metadatas", [])
+            if not batch_metas:
+                break
+            for m in batch_metas:
+                w = m.get("wing", "unknown")
+                r = m.get("room", "unknown")
+                wings[w] = wings.get(w, 0) + 1
+                rooms[r] = rooms.get(r, 0) + 1
+            offset += len(batch_metas)
     except Exception:
         pass
+    count = sum(wings.values())
     return {
         "total_drawers": count,
         "wings": wings,
@@ -125,10 +133,18 @@ def tool_list_wings():
         return _no_palace()
     wings = {}
     try:
-        all_meta = col.get(include=["metadatas"])["metadatas"]
-        for m in all_meta:
-            w = m.get("wing", "unknown")
-            wings[w] = wings.get(w, 0) + 1
+        # Batch to avoid SQL variable limit - avoid col.count() which hangs
+        offset = 0
+        batch_size = 1000
+        while True:
+            batch = col.get(limit=batch_size, offset=offset, include=["metadatas"])
+            batch_metas = batch.get("metadatas", [])
+            if not batch_metas:
+                break
+            for m in batch_metas:
+                w = m.get("wing", "unknown")
+                wings[w] = wings.get(w, 0) + 1
+            offset += len(batch_metas)
     except Exception:
         pass
     return {"wings": wings}
@@ -140,13 +156,21 @@ def tool_list_rooms(wing: str = None):
         return _no_palace()
     rooms = {}
     try:
-        kwargs = {"include": ["metadatas"]}
-        if wing:
-            kwargs["where"] = {"wing": wing}
-        all_meta = col.get(**kwargs)["metadatas"]
-        for m in all_meta:
-            r = m.get("room", "unknown")
-            rooms[r] = rooms.get(r, 0) + 1
+        # Batch to avoid SQL variable limit - avoid col.count() which hangs
+        offset = 0
+        batch_size = 1000
+        while True:
+            kwargs = {"limit": batch_size, "offset": offset, "include": ["metadatas"]}
+            if wing:
+                kwargs["where"] = {"wing": wing}
+            batch = col.get(**kwargs)
+            batch_metas = batch.get("metadatas", [])
+            if not batch_metas:
+                break
+            for m in batch_metas:
+                r = m.get("room", "unknown")
+                rooms[r] = rooms.get(r, 0) + 1
+            offset += len(batch_metas)
     except Exception:
         pass
     return {"wing": wing or "all", "rooms": rooms}
@@ -158,13 +182,21 @@ def tool_get_taxonomy():
         return _no_palace()
     taxonomy = {}
     try:
-        all_meta = col.get(include=["metadatas"])["metadatas"]
-        for m in all_meta:
-            w = m.get("wing", "unknown")
-            r = m.get("room", "unknown")
-            if w not in taxonomy:
-                taxonomy[w] = {}
-            taxonomy[w][r] = taxonomy[w].get(r, 0) + 1
+        # Batch to avoid SQL variable limit - avoid col.count() which hangs
+        offset = 0
+        batch_size = 1000
+        while True:
+            batch = col.get(limit=batch_size, offset=offset, include=["metadatas"])
+            batch_metas = batch.get("metadatas", [])
+            if not batch_metas:
+                break
+            for m in batch_metas:
+                w = m.get("wing", "unknown")
+                r = m.get("room", "unknown")
+                if w not in taxonomy:
+                    taxonomy[w] = {}
+                taxonomy[w][r] = taxonomy[w].get(r, 0) + 1
+            offset += len(batch_metas)
     except Exception:
         pass
     return {"taxonomy": taxonomy}
