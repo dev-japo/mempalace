@@ -96,18 +96,31 @@ class Layer1:
         except Exception:
             return "## L1 — No palace found. Run: mempalace mine <dir>"
 
-        # Fetch all drawers (with optional wing filter)
-        kwargs = {"include": ["documents", "metadatas"]}
-        if self.wing:
-            kwargs["where"] = {"wing": self.wing}
-
+        # Fetch all drawers (with optional wing filter) - batched to avoid SQL variable limit
+        # Avoid col.count() which hangs on large collections
         try:
-            results = col.get(**kwargs)
+            docs = []
+            metas = []
+            offset = 0
+            batch_size = 1000
+            
+            while True:
+                kwargs = {"limit": batch_size, "offset": offset, "include": ["documents", "metadatas"]}
+                if self.wing:
+                    kwargs["where"] = {"wing": self.wing}
+                
+                batch = col.get(**kwargs)
+                batch_docs = batch.get("documents", [])
+                batch_metas = batch.get("metadatas", [])
+                
+                if not batch_docs:
+                    break
+                    
+                docs.extend(batch_docs)
+                metas.extend(batch_metas)
+                offset += len(batch_docs)
         except Exception:
             return "## L1 — No drawers found."
-
-        docs = results.get("documents", [])
-        metas = results.get("metadatas", [])
 
         if not docs:
             return "## L1 — No memories yet."
@@ -200,17 +213,33 @@ class Layer2:
         elif room:
             where = {"room": room}
 
-        kwargs = {"include": ["documents", "metadatas"], "limit": n_results}
-        if where:
-            kwargs["where"] = where
-
+        # Batch retrieval to avoid SQL variable limit - avoid col.count() which hangs
         try:
-            results = col.get(**kwargs)
+            docs = []
+            metas = []
+            offset = 0
+            batch_size = 1000
+            remaining = n_results
+            
+            while remaining > 0:
+                fetch_size = min(batch_size, remaining)
+                kwargs = {"limit": fetch_size, "offset": offset, "include": ["documents", "metadatas"]}
+                if where:
+                    kwargs["where"] = where
+                
+                batch = col.get(**kwargs)
+                batch_docs = batch.get("documents", [])
+                batch_metas = batch.get("metadatas", [])
+                
+                if not batch_docs:
+                    break
+                    
+                docs.extend(batch_docs)
+                metas.extend(batch_metas)
+                offset += len(batch_docs)
+                remaining -= len(batch_docs)
         except Exception as e:
             return f"Retrieval error: {e}"
-
-        docs = results.get("documents", [])
-        metas = results.get("metadatas", [])
 
         if not docs:
             label = f"wing={wing}" if wing else ""
