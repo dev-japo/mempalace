@@ -398,9 +398,23 @@ def status(palace_path: str):
         print("  Run: mempalace init <dir> then mempalace mine <dir>")
         return
 
-    # Count by wing and room
-    r = col.get(limit=10000, include=["metadatas"])
-    metas = r["metadatas"]
+    # Count by wing and room (batched to avoid SQL variable limit)
+    # Avoid col.count() as it can hang on large collections
+    metas = []
+    
+    offset = 0
+    batch_size = 1000
+    while True:
+        try:
+            batch = col.get(limit=batch_size, offset=offset, include=["metadatas"])
+            batch_metas = batch.get("metadatas", [])
+            if not batch_metas:
+                break
+            metas.extend(batch_metas)
+            offset += len(batch_metas)
+        except Exception as e:
+            print(f"\n  Error reading batch at offset {offset}: {e}")
+            break
 
     wing_rooms = defaultdict(lambda: defaultdict(int))
     for m in metas:
