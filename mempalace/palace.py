@@ -9,7 +9,14 @@ import hashlib
 import os
 import re
 
-from .backends.chroma import ChromaBackend
+from .backends.sqlite_backend import SQLiteBackend
+
+try:
+    from .backends.chroma import ChromaBackend
+    CHROMADB_AVAILABLE = True
+except ImportError:
+    ChromaBackend = None
+    CHROMADB_AVAILABLE = False
 
 SKIP_DIRS = {
     ".git",
@@ -37,7 +44,33 @@ SKIP_DIRS = {
     "target",
 }
 
-_DEFAULT_BACKEND = ChromaBackend()
+def _get_backend():
+    """Get the configured backend based on environment or availability.
+    
+    Checks MEMPALACE_BACKEND env var, falls back to ChromaDB if available,
+    otherwise uses SQLite backend (for s390x compatibility).
+    """
+    backend_type = os.environ.get("MEMPALACE_BACKEND", "auto").lower()
+    
+    if backend_type == "sqlite":
+        return SQLiteBackend()
+    elif backend_type == "chroma":
+        if not CHROMADB_AVAILABLE:
+            raise ImportError(
+                "ChromaDB backend requested but not available. "
+                "Install with: pip install mempalace[chromadb]"
+            )
+        return ChromaBackend()
+    elif backend_type == "auto":
+        # Try ChromaDB first, fall back to SQLite if unavailable
+        if CHROMADB_AVAILABLE:
+            return ChromaBackend()
+        return SQLiteBackend()
+    else:
+        raise ValueError(f"Unknown backend type: {backend_type}")
+
+
+_DEFAULT_BACKEND = _get_backend()
 
 # Schema version for drawer normalization. Bump when the normalization
 # pipeline changes in a way that existing drawers should be rebuilt to pick up
