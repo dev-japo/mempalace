@@ -219,6 +219,13 @@ def cmd_status(args):
 
 def cmd_repair(args):
     """Rebuild palace vector index from SQLite metadata."""
+    try:
+        import chromadb
+    except ModuleNotFoundError:
+        print("\n  Error: ChromaDB is not installed.")
+        print("  The repair command requires ChromaDB.")
+        print("  Install it with: pip install 'mempalace[chromadb]'")
+        return
     import shutil
     from .backends.chroma import ChromaBackend
     from .migrate import confirm_destructive_action, contains_palace_database
@@ -345,6 +352,13 @@ def cmd_mcp(args):
 
 def cmd_compress(args):
     """Compress drawers in a wing using AAAK Dialect."""
+    try:
+        import chromadb
+    except ModuleNotFoundError:
+        print("\n  Error: ChromaDB is not installed.")
+        print("  The compress command requires ChromaDB.")
+        print("  Install it with: pip install 'mempalace[chromadb]'")
+        return
     from .backends.chroma import ChromaBackend
     from .dialect import Dialect
 

@@ -42,6 +42,20 @@ except (OSError, AttributeError):
     pass
 sys.stdout = sys.stderr
 
+from .config import MempalaceConfig, sanitize_name, sanitize_content
+from .version import __version__
+
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except ModuleNotFoundError:
+    chromadb = None
+    CHROMADB_AVAILABLE = False
+
+from .query_sanitizer import sanitize_query
+from .searcher import search_memories
+from .palace_graph import traverse, find_tunnels, graph_stats
+
 import argparse  # noqa: E402  (deferred until after stdio protection above)
 import json  # noqa: E402
 import logging  # noqa: E402
@@ -171,6 +185,12 @@ def _get_client():
     Note: FAT/exFAT may return 0 for st_ino — the ``current_inode != 0``
     guard skips reconnect detection on those filesystems (safe fallback).
     """
+    if not CHROMADB_AVAILABLE:
+        raise ImportError(
+            "ChromaDB is not installed. "
+            "Install it with: pip install 'mempalace[chromadb]'"
+        )
+    
     global \
         _client_cache, \
         _collection_cache, \

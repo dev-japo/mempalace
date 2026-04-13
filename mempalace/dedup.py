@@ -27,6 +27,13 @@ import os
 import time
 from collections import defaultdict
 
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except ModuleNotFoundError:
+    chromadb = None
+    CHROMADB_AVAILABLE = False
+
 from .backends.chroma import ChromaBackend
 
 
@@ -129,6 +136,12 @@ def dedup_source_group(col, drawer_ids, threshold=DEFAULT_THRESHOLD, dry_run=Tru
 
 def show_stats(palace_path=None):
     """Show duplication statistics without making changes."""
+    if not CHROMADB_AVAILABLE:
+        print("\n  Error: ChromaDB is not installed.")
+        print("  The dedup stats command requires ChromaDB.")
+        print("  Install it with: pip install 'mempalace[chromadb]'")
+        return
+    
     palace_path = palace_path or _get_palace_path()
     col = ChromaBackend().get_collection(palace_path, COLLECTION_NAME)
 
@@ -156,6 +169,12 @@ def dedup_palace(
     wing=None,
 ):
     """Main entry point: deduplicate near-identical drawers across the palace."""
+    if not CHROMADB_AVAILABLE:
+        print("\n  Error: ChromaDB is not installed.")
+        print("  The dedup command requires ChromaDB.")
+        print("  Install it with: pip install 'mempalace[chromadb]'")
+        return
+    
     palace_path = palace_path or _get_palace_path()
 
     print(f"\n{'=' * 55}")

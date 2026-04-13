@@ -134,6 +134,13 @@ def confirm_destructive_action(
 
 def migrate(palace_path: str, dry_run: bool = False, confirm: bool = False):
     """Migrate a palace to the currently installed ChromaDB version."""
+    try:
+        import chromadb
+    except ModuleNotFoundError:
+        print("\n  Error: ChromaDB is not installed.")
+        print("  The migrate command requires ChromaDB.")
+        print("  Install it with: pip install 'mempalace[chromadb]'")
+        return False
     from .backends.chroma import ChromaBackend
 
     palace_path = os.path.abspath(os.path.expanduser(palace_path))

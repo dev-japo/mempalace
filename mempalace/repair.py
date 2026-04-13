@@ -32,6 +32,13 @@ import os
 import shutil
 import time
 
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except ModuleNotFoundError:
+    chromadb = None
+    CHROMADB_AVAILABLE = False
+
 from .backends.chroma import ChromaBackend
 
 
@@ -86,6 +93,12 @@ def scan_palace(palace_path=None, only_wing=None):
 
     Returns (good_set, bad_set).
     """
+    if not CHROMADB_AVAILABLE:
+        print("\n  Error: ChromaDB is not installed.")
+        print("  The repair scan command requires ChromaDB.")
+        print("  Install it with: pip install 'mempalace[chromadb]'")
+        return set(), set()
+    
     palace_path = palace_path or _get_palace_path()
     print(f"\n  Palace: {palace_path}")
     print("  Loading...")
@@ -157,6 +170,12 @@ def scan_palace(palace_path=None, only_wing=None):
 
 def prune_corrupt(palace_path=None, confirm=False):
     """Delete corrupt IDs listed in corrupt_ids.txt."""
+    if not CHROMADB_AVAILABLE:
+        print("\n  Error: ChromaDB is not installed.")
+        print("  The repair prune command requires ChromaDB.")
+        print("  Install it with: pip install 'mempalace[chromadb]'")
+        return
+    
     palace_path = palace_path or _get_palace_path()
     bad_file = os.path.join(palace_path, "corrupt_ids.txt")
 
@@ -209,6 +228,11 @@ def rebuild_index(palace_path=None):
     3. Delete and recreate the collection with hnsw:space=cosine
     4. Upsert all drawers back
     """
+    if not CHROMADB_AVAILABLE:
+        print("\n  Error: ChromaDB is not installed.")
+        print("  The repair rebuild command requires ChromaDB.")
+        print("  Install it with: pip install 'mempalace[chromadb]'")
+        return
     palace_path = palace_path or _get_palace_path()
 
     if not os.path.isdir(palace_path):
