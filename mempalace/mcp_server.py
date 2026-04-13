@@ -44,13 +44,7 @@ sys.stdout = sys.stderr
 
 from .config import MempalaceConfig, sanitize_name, sanitize_content
 from .version import __version__
-
-try:
-    import chromadb
-    CHROMADB_AVAILABLE = True
-except ModuleNotFoundError:
-    chromadb = None
-    CHROMADB_AVAILABLE = False
+from .palace import get_collection as palace_get_collection
 
 from .query_sanitizer import sanitize_query
 from .searcher import search_memories
@@ -117,10 +111,7 @@ else:
     _kg = KnowledgeGraph()
 
 
-_client_cache = None
 _collection_cache = None
-_palace_db_inode = 0  # inode of chroma.sqlite3 at cache time
-_palace_db_mtime = 0.0  # mtime of chroma.sqlite3 at cache time
 
 
 # ==================== WRITE-AHEAD LOG ====================
@@ -173,81 +164,28 @@ def _wal_log(operation: str, params: dict, result: dict = None):
         logger.error(f"WAL write failed: {e}")
 
 
-def _get_client():
-    """Return a ChromaDB PersistentClient, reconnecting if the database changed on disk.
-
-    Detects palace rebuilds (repair/nuke/purge) by checking the inode of
-    chroma.sqlite3.  A full rebuild replaces the file, changing the inode.
-    Also detects external writes (scripts, CLI) via mtime changes — the
-    inode check alone misses in-place modifications that invalidate the
-    in-memory HNSW index.
-
-    Note: FAT/exFAT may return 0 for st_ino — the ``current_inode != 0``
-    guard skips reconnect detection on those filesystems (safe fallback).
-    """
-    if not CHROMADB_AVAILABLE:
-        raise ImportError(
-            "ChromaDB is not installed. "
-            "Install it with: pip install 'mempalace[chromadb]'"
-        )
-    
-    global \
-        _client_cache, \
-        _collection_cache, \
-        _palace_db_inode, \
-        _palace_db_mtime, \
-        _metadata_cache, \
-        _metadata_cache_time
-    db_path = os.path.join(_config.palace_path, "chroma.sqlite3")
-    try:
-        st = os.stat(db_path)
-        current_inode = st.st_ino
-        current_mtime = st.st_mtime
-    except OSError:
-        current_inode = 0
-        current_mtime = 0.0
-
-    # If the DB file disappeared (e.g. during rebuild) but we have a cached
-    # collection, invalidate so we don't serve stale data.  Without this,
-    # both stored and current values are 0 on the first call after deletion,
-    # making inode_changed and mtime_changed both False.
-    if not os.path.isfile(db_path) and _collection_cache is not None:
-        _client_cache = None
-        _collection_cache = None
-        _palace_db_inode = 0
-        _palace_db_mtime = 0.0
-        # Fall through to normal reconnect which will handle missing DB
-
-    inode_changed = current_inode != 0 and current_inode != _palace_db_inode
-    mtime_changed = current_mtime != 0.0 and abs(current_mtime - _palace_db_mtime) > 0.01
-
-    if _client_cache is None or inode_changed or mtime_changed:
-        _client_cache = ChromaBackend.make_client(_config.palace_path)
-        _collection_cache = None
-        _metadata_cache = None
-        _metadata_cache_time = 0
-        _palace_db_inode = current_inode
-        _palace_db_mtime = current_mtime
-    return _client_cache
-
 
 def _get_collection(create=False):
-    """Return the ChromaDB collection, caching the client between calls."""
+    """Return the palace collection through the backend system."""
     global _collection_cache, _metadata_cache, _metadata_cache_time
     try:
-        client = _get_client()
-        if create:
-            _collection_cache = ChromaCollection(
-                client.get_or_create_collection(
-                    _config.collection_name, metadata={"hnsw:space": "cosine"}
-                )
+        if _collection_cache is None or create:
+            _collection_cache = palace_get_collection(
+                _config.palace_path,
+                collection_name=_config.collection_name,
+                create=create
             )
             _metadata_cache = None
             _metadata_cache_time = 0
-        elif _collection_cache is None:
-            _collection_cache = ChromaCollection(client.get_collection(_config.collection_name))
             _metadata_cache = None
             _metadata_cache_time = 0
+||||||| parent of 28fa34fe2d84 (fix: make MCP server backend-agnostic, support SQLite fallback)
+        elif _collection_cache is None:
+            _collection_cache = client.get_collection(_config.collection_name)
+            _metadata_cache = None
+            _metadata_cache_time = 0
+=======
+>>>>>>> 28fa34fe2d84 (fix: make MCP server backend-agnostic, support SQLite fallback)
         return _collection_cache
     except Exception:
         return None
