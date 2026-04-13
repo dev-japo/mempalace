@@ -27,7 +27,6 @@ def _get_collection(config=None):
     try:
         client = chromadb.PersistentClient(
             path=config.palace_path,
-            settings=Settings(anonymized_telemetry=False)
         )
         return client.get_collection(config.collection_name)
     except Exception:

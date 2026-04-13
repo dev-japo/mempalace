@@ -185,7 +185,6 @@ def get_collection(palace_path: str):
     os.makedirs(palace_path, exist_ok=True)
     client = chromadb.PersistentClient(
         path=palace_path,
-        settings=Settings(anonymized_telemetry=False)
     )
     try:
         return client.get_collection("mempalace_drawers")
@@ -397,7 +396,6 @@ def status(palace_path: str):
     try:
         client = chromadb.PersistentClient(
             path=palace_path,
-            settings=Settings(anonymized_telemetry=False)
         )
         col = client.get_collection("mempalace_drawers")
     except Exception:
@@ -408,7 +406,7 @@ def status(palace_path: str):
     # Count by wing and room (batched to avoid SQL variable limit)
     # Avoid col.count() as it can hang on large collections
     metas = []
-    
+
     offset = 0
     batch_size = 1000
     while True:

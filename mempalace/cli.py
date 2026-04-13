@@ -168,7 +168,6 @@ def cmd_repair(args):
     try:
         client = chromadb.PersistentClient(
             path=palace_path,
-            settings=Settings(anonymized_telemetry=False)
         )
         col = client.get_collection("mempalace_drawers")
         total = col.count()
@@ -249,7 +248,6 @@ def cmd_compress(args):
     try:
         client = chromadb.PersistentClient(
             path=palace_path,
-            settings=Settings(anonymized_telemetry=False)
         )
         col = client.get_collection("mempalace_drawers")
     except Exception:

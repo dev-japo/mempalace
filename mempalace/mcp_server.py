@@ -44,7 +44,6 @@ def _get_collection(create=False):
     try:
         client = chromadb.PersistentClient(
             path=_config.palace_path,
-            settings=Settings(anonymized_telemetry=False)
         )
         if create:
             return client.get_or_create_collection(_config.collection_name)

@@ -94,7 +94,6 @@ class Layer1:
         try:
             client = chromadb.PersistentClient(
                 path=self.palace_path,
-                settings=Settings(anonymized_telemetry=False)
             )
             col = client.get_collection("mempalace_drawers")
         except Exception:
@@ -206,7 +205,6 @@ class Layer2:
         try:
             client = chromadb.PersistentClient(
                 path=self.palace_path,
-                settings=Settings(anonymized_telemetry=False)
             )
             col = client.get_collection("mempalace_drawers")
         except Exception:
@@ -289,7 +287,6 @@ class Layer3:
         try:
             client = chromadb.PersistentClient(
                 path=self.palace_path,
-                settings=Settings(anonymized_telemetry=False)
             )
             col = client.get_collection("mempalace_drawers")
         except Exception:
@@ -348,7 +345,6 @@ class Layer3:
         try:
             client = chromadb.PersistentClient(
                 path=self.palace_path,
-                settings=Settings(anonymized_telemetry=False)
             )
             col = client.get_collection("mempalace_drawers")
         except Exception:
@@ -472,7 +468,6 @@ class MemoryStack:
         try:
             client = chromadb.PersistentClient(
                 path=self.palace_path,
-                settings=Settings(anonymized_telemetry=False)
             )
             col = client.get_collection("mempalace_drawers")
             count = col.count()

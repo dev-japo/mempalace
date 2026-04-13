@@ -21,7 +21,6 @@ def search(query: str, palace_path: str, wing: str = None, room: str = None, n_r
     try:
         client = chromadb.PersistentClient(
             path=palace_path,
-            settings=Settings(anonymized_telemetry=False)
         )
         col = client.get_collection("mempalace_drawers")
     except Exception:
@@ -98,7 +97,6 @@ def search_memories(
     try:
         client = chromadb.PersistentClient(
             path=palace_path,
-            settings=Settings(anonymized_telemetry=False)
         )
         col = client.get_collection("mempalace_drawers")
     except Exception as e:
