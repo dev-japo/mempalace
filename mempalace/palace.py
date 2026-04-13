@@ -14,7 +14,7 @@ from .backends.sqlite_backend import SQLiteBackend
 try:
     from .backends.chroma import ChromaBackend
     CHROMADB_AVAILABLE = True
-except ImportError:
+except Exception:
     ChromaBackend = None
     CHROMADB_AVAILABLE = False
 

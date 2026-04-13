@@ -36,7 +36,7 @@ from mempalace.knowledge_graph import KnowledgeGraph  # noqa: E402
 try:
     import chromadb  # noqa: E402
     CHROMADB_AVAILABLE = True
-except ImportError:
+except Exception:
     chromadb = None
     CHROMADB_AVAILABLE = False
 
@@ -51,7 +51,7 @@ def _reset_mcp_cache():
 
             mcp_server._client_cache = None
             mcp_server._collection_cache = None
-        except (ImportError, AttributeError):
+        except Exception:
             pass
 
     _clear_cache()

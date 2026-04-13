@@ -1,7 +1,9 @@
 """Tests for SQLite backend implementation."""
 
+import importlib
 import json
 import os
+import sys
 import tempfile
 from pathlib import Path
 
@@ -223,7 +225,7 @@ def test_fts5_triggers(temp_palace):
     col.add(
         documents=["Python programming language", "Rust systems programming"],
         ids=["id1", "id2"],
-        metadatas=[{}, {}]
+        metadatas=[{}, {}],
     )
 
     # Both should be findable
@@ -254,3 +256,34 @@ def test_fts5_triggers(temp_palace):
     # Rust should still be there
     results = col.query(query_texts=["Rust"], n_results=2)
     assert len(results["documents"][0]) == 1
+
+
+def test_optional_chroma_runtime_failure_falls_back_to_sqlite(monkeypatch):
+    """Treat chroma runtime init failures as optional backend unavailability."""
+    original_chroma = sys.modules.get("mempalace.backends.chroma")
+    original_backends = sys.modules.get("mempalace.backends")
+
+    sys.modules.pop("mempalace.backends", None)
+    sys.modules.pop("mempalace.backends.chroma", None)
+
+    real_import_module = importlib.import_module
+
+    def fake_import_module(name, package=None):
+        if name == "mempalace.backends.chroma":
+            raise ValueError("The onnxruntime python package is not installed.")
+        return real_import_module(name, package)
+
+    monkeypatch.setattr(importlib, "import_module", fake_import_module)
+
+    try:
+        backends = importlib.import_module("mempalace.backends")
+        assert backends.ChromaBackend is None
+        assert backends.ChromaCollection is None
+        assert backends.SQLiteBackend is SQLiteBackend
+    finally:
+        sys.modules.pop("mempalace.backends", None)
+        sys.modules.pop("mempalace.backends.chroma", None)
+        if original_chroma is not None:
+            sys.modules["mempalace.backends.chroma"] = original_chroma
+        if original_backends is not None:
+            sys.modules["mempalace.backends"] = original_backends

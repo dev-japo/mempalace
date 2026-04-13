@@ -1,7 +1,11 @@
 """Storage backend implementations for MemPalace."""
 
+import logging
+
 from .base import BaseCollection
 from .sqlite_backend import SQLiteBackend, SQLiteCollection
+
+logger = logging.getLogger(__name__)
 
 __all__ = [
     "BaseCollection",
@@ -13,6 +17,7 @@ __all__ = [
 try:
     from .chroma import ChromaBackend, ChromaCollection
     __all__.extend(["ChromaBackend", "ChromaCollection"])
-except ImportError:
+except Exception as exc:
+    logger.info("Chroma backend unavailable, falling back to SQLite: %s", exc)
     ChromaBackend = None
     ChromaCollection = None
