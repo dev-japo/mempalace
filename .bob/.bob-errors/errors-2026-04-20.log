@@ -1,0 +1,29 @@
+
+================================================================================
+ERROR LOGGED: 2026-04-20T12:03:57.002Z
+================================================================================
+Error Name: Error
+Error Message: Cannot connect to 'linuxci-db' - server may be down or URL incorrect
+
+Stack Trace:
+Error: Cannot connect to 'linuxci-db' - server may be down or URL incorrect
+    at qlr (file:///linux390/bob/lib/node_modules/bobshell/bundle/bob.js:3502:10291)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async txe.connect (file:///linux390/bob/lib/node_modules/bobshell/bundle/bob.js:3502:13137)
+    at async file:///linux390/bob/lib/node_modules/bobshell/bundle/bob.js:3502:17293
+================================================================================
+
+
+================================================================================
+ERROR LOGGED: 2026-04-20T12:03:57.036Z
+================================================================================
+Error Name: Error
+Error Message: Connection failed for 'mempalace': MCP error -32000: Connection closed
+
+Stack Trace:
+Error: Connection failed for 'mempalace': MCP error -32000: Connection closed
+    at qlr (file:///linux390/bob/lib/node_modules/bobshell/bundle/bob.js:3502:10291)
+    at async txe.connect (file:///linux390/bob/lib/node_modules/bobshell/bundle/bob.js:3502:13137)
+    at async file:///linux390/bob/lib/node_modules/bobshell/bundle/bob.js:3502:17293
+================================================================================
+

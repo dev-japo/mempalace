@@ -177,15 +177,6 @@ def _get_collection(create=False):
             )
             _metadata_cache = None
             _metadata_cache_time = 0
-            _metadata_cache = None
-            _metadata_cache_time = 0
-||||||| parent of 28fa34fe2d84 (fix: make MCP server backend-agnostic, support SQLite fallback)
-        elif _collection_cache is None:
-            _collection_cache = client.get_collection(_config.collection_name)
-            _metadata_cache = None
-            _metadata_cache_time = 0
-=======
->>>>>>> 28fa34fe2d84 (fix: make MCP server backend-agnostic, support SQLite fallback)
         return _collection_cache
     except Exception:
         return None

@@ -136,10 +136,14 @@ def migrate(palace_path: str, dry_run: bool = False, confirm: bool = False):
     """Migrate a palace to the currently installed ChromaDB version."""
     try:
         import chromadb
-    except ModuleNotFoundError:
-        print("\n  Error: ChromaDB is not installed.")
-        print("  The migrate command requires ChromaDB.")
-        print("  Install it with: pip install 'mempalace[chromadb]'")
+    except (ModuleNotFoundError, ValueError) as e:
+        print("\n  Error: ChromaDB is not installed or missing dependencies.")
+        if "onnxruntime" in str(e):
+            print("  The onnxruntime package is required by ChromaDB.")
+            print("  Install it with: pip install 'mempalace[chromadb]'")
+        else:
+            print("  The migrate command requires ChromaDB.")
+            print("  Install it with: pip install 'mempalace[chromadb]'")
         return False
     from .backends.chroma import ChromaBackend
 

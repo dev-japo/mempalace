@@ -30,7 +30,7 @@ from collections import defaultdict
 try:
     import chromadb
     CHROMADB_AVAILABLE = True
-except ModuleNotFoundError:
+except (ModuleNotFoundError, ValueError):
     chromadb = None
     CHROMADB_AVAILABLE = False
 

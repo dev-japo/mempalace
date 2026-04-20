@@ -4,9 +4,14 @@ import logging
 import os
 import sqlite3
 
-import chromadb
-
 from .base import BaseCollection
+
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except (ModuleNotFoundError, ValueError):
+    chromadb = None
+    CHROMADB_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +26,8 @@ def _fix_blob_seq_ids(palace_path: str):
 
     Must run BEFORE PersistentClient is created (the compactor fires on init).
     """
+    if not CHROMADB_AVAILABLE:
+        return
     db_path = os.path.join(palace_path, "chroma.sqlite3")
     if not os.path.isfile(db_path):
         return
@@ -84,9 +91,14 @@ class ChromaBackend:
 
     def _client(self, palace_path: str):
         """Return a cached PersistentClient for *palace_path*, creating one if needed."""
+        if not CHROMADB_AVAILABLE:
+            raise RuntimeError(
+                "ChromaDB is not available. Install it with: pip install 'mempalace[chromadb]'"
+            )
         if palace_path not in self._clients:
             _fix_blob_seq_ids(palace_path)
-            self._clients[palace_path] = chromadb.PersistentClient(path=palace_path)
+            import chromadb as _chromadb
+            self._clients[palace_path] = _chromadb.PersistentClient(path=palace_path)
         return self._clients[palace_path]
 
     # ------------------------------------------------------------------
@@ -100,12 +112,20 @@ class ChromaBackend:
         Intended for long-lived callers (e.g. mcp_server) that keep their own
         inode/mtime-based client cache.
         """
+        if not CHROMADB_AVAILABLE:
+            raise RuntimeError(
+                "ChromaDB is not available. Install it with: pip install 'mempalace[chromadb]'"
+            )
         _fix_blob_seq_ids(palace_path)
         return chromadb.PersistentClient(path=palace_path)
 
     @staticmethod
     def backend_version() -> str:
         """Return the installed chromadb package version string."""
+        if not CHROMADB_AVAILABLE:
+            raise RuntimeError(
+                "ChromaDB is not available. Install it with: pip install 'mempalace[chromadb]'"
+            )
         return chromadb.__version__
 
     # ------------------------------------------------------------------

@@ -3,8 +3,20 @@ import shutil
 import tempfile
 from pathlib import Path
 
-import chromadb
 import yaml
+import pytest
+
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except (ModuleNotFoundError, ValueError):
+    chromadb = None
+    CHROMADB_AVAILABLE = False
+
+pytestmark = pytest.mark.skipif(
+    not CHROMADB_AVAILABLE,
+    reason="ChromaDB or onnxruntime not installed"
+)
 
 from mempalace.miner import load_config, mine, scan_project, status
 from mempalace.palace import NORMALIZE_VERSION, file_already_mined

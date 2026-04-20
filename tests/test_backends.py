@@ -1,9 +1,20 @@
 import sqlite3
 
-import chromadb
 import pytest
 
+try:
+    import chromadb
+    CHROMADB_AVAILABLE = True
+except (ModuleNotFoundError, ValueError):
+    chromadb = None
+    CHROMADB_AVAILABLE = False
+
 from mempalace.backends.chroma import ChromaBackend, ChromaCollection, _fix_blob_seq_ids
+
+pytestmark = pytest.mark.skipif(
+    not CHROMADB_AVAILABLE,
+    reason="ChromaDB or onnxruntime not installed"
+)
 
 
 class _FakeCollection:

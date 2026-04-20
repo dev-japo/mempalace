@@ -1,0 +1,43 @@
+Traceback (most recent call last):
+  File "/home/japo/.venv/lib/python3.13/site-packages/chromadb/utils/embedding_functions.py", line 220, in __init__
+    self.ort = importlib.import_module("onnxruntime")
+               ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1324, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'onnxruntime'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/japo/.venv/bin/mempalace", line 6, in <module>
+    sys.exit(main())
+             ~~~~^^
+  File "/home/japo/Repositories/mempalace/mempalace/cli.py", line 695, in main
+    dispatch[args.command](args)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/home/japo/Repositories/mempalace/mempalace/cli.py", line 223, in cmd_repair
+    import chromadb
+  File "/home/japo/.venv/lib/python3.13/site-packages/chromadb/__init__.py", line 6, in <module>
+    from chromadb.api import API
+  File "/home/japo/.venv/lib/python3.13/site-packages/chromadb/api/__init__.py", line 5, in <module>
+    from chromadb.api.models.Collection import Collection
+  File "/home/japo/.venv/lib/python3.13/site-packages/chromadb/api/models/Collection.py", line 38, in <module>
+    class Collection(BaseModel):
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<358 lines>...
+            return ids, embeddings, metadatas, documents  # type: ignore
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/japo/.venv/lib/python3.13/site-packages/chromadb/api/models/Collection.py", line 50, in Collection
+    embedding_function: Optional[EmbeddingFunction] = ef.DefaultEmbeddingFunction(),
+                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/home/japo/.venv/lib/python3.13/site-packages/chromadb/utils/embedding_functions.py", line 331, in DefaultEmbeddingFunction
+    return ONNXMiniLM_L6_V2()
+  File "/home/japo/.venv/lib/python3.13/site-packages/chromadb/utils/embedding_functions.py", line 222, in __init__
+    raise ValueError(
+        "The onnxruntime python package is not installed. Please install it with `pip install onnxruntime`"
+    )
+ValueError: The onnxruntime python package is not installed. Please install it with `pip install onnxruntime`
