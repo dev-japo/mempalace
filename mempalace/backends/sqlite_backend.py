@@ -147,6 +147,50 @@ class SQLiteCollection(BaseCollection):
         
         self.conn.commit()
 
+    def update(self, **kwargs: Any) -> None:
+        """Update existing documents. Raises if any ID is missing."""
+        ids = kwargs.get("ids", [])
+        documents = kwargs.get("documents")
+        metadatas = kwargs.get("metadatas")
+        
+        if not ids:
+            raise ValueError("update() requires 'ids' parameter")
+        
+        cursor = self.conn.cursor()
+        
+        # Check all IDs exist first
+        placeholders = ",".join("?" * len(ids))
+        cursor.execute(
+            f"SELECT id FROM {self.collection_name}_docs WHERE id IN ({placeholders})",
+            ids
+        )
+        existing_ids = {row[0] for row in cursor.fetchall()}
+        missing_ids = set(ids) - existing_ids
+        if missing_ids:
+            raise ValueError(f"Cannot update non-existent IDs: {missing_ids}")
+        
+        # Update documents and/or metadata
+        for i, doc_id in enumerate(ids):
+            updates = []
+            params = []
+            
+            if documents and i < len(documents):
+                updates.append("document = ?")
+                params.append(documents[i])
+            
+            if metadatas and i < len(metadatas):
+                updates.append("metadata = ?")
+                params.append(json.dumps(metadatas[i]))
+            
+            if updates:
+                params.append(doc_id)
+                cursor.execute(
+                    f"UPDATE {self.collection_name}_docs SET {', '.join(updates)} WHERE id = ?",
+                    params
+                )
+        
+        self.conn.commit()
+
     def query(self, **kwargs: Any) -> Dict[str, Any]:
         """Query documents using FTS5 full-text search.
         
